@@ -8,6 +8,8 @@
 
 Solar-weather conditions, a live DX spot heatmap, the contest calendar, and the NCDXF beacon schedule — in one popup, updated automatically in the background. More tools planned.
 
+By [I3rixon](https://github.com/I3rixon)
+
 </div>
 
 ---
