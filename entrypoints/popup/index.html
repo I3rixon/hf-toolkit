@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HF Toolkit</title>
+    <meta name="manifest.type" content="browser_action" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="app-header">
+        <div class="title-row">
+          <span class="sun-icon" aria-hidden="true"></span>
+          <h1 id="page-title">Solar Activity</h1>
+          <button id="alerts-toggle" class="icon-btn" title="Toggle alerts" aria-label="Toggle alerts">🔕</button>
+          <button id="theme-toggle" class="icon-btn" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+          <button id="refresh-btn" class="icon-btn refresh-btn" title="Refresh now" aria-label="Refresh now">⟳</button>
+        </div>
+        <p id="updated-line" class="updated-line">Loading…</p>
+      </header>
+
+      <nav class="tab-bar" role="tablist">
+        <button class="tab-btn active" data-tab="solar" role="tab" aria-selected="true">Solar Activity</button>
+        <button class="tab-btn" data-tab="band" role="tab" aria-selected="false">Band Activity</button>
+        <button class="tab-btn" data-tab="contests" role="tab" aria-selected="false">Contests</button>
+      </nav>
+
+      <main id="panel-solar" class="tab-panel content">
+        <p class="loading">Fetching latest data…</p>
+      </main>
+
+      <main id="panel-band" class="tab-panel content" hidden>
+        <div class="band-controls">
+          <label for="continent-select">Continent</label>
+          <select id="continent-select"></select>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="band-canvas"></canvas>
+          <p id="band-loading" class="loading">Fetching latest spots…</p>
+        </div>
+        <div class="legend-wrap">
+          <div class="legend-bar"></div>
+          <div class="legend-scale">
+            <span>0</span>
+            <span id="legend-max">—</span>
+          </div>
+        </div>
+        <p id="band-caption" class="band-caption"></p>
+      </main>
+
+      <main id="panel-contests" class="tab-panel content" hidden>
+        <p class="contests-intro">Full-length contests (23+ hours) from the WA7BNM Contest Calendar.</p>
+        <ul id="contest-list" class="contest-list">
+          <li class="loading">Fetching contest calendar…</li>
+        </ul>
+      </main>
+
+      <footer class="app-footer">
+        <div class="footer-left">
+          <span id="version-tag" class="version-tag"></span>
+          <span id="stale-badge" class="stale-badge" hidden>Data may be stale</span>
+        </div>
+        <a id="source-link" href="https://www.hamqsl.com/solar101.html" target="_blank" rel="noopener">Source: N0NBH · hamqsl.com</a>
+      </footer>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

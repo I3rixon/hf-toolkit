@@ -1,0 +1,24 @@
+{
+  "name": "hf-toolkit",
+  "description": "HF ham radio toolkit: solar conditions, band activity heatmap, and contest calendar in one popup",
+  "private": true,
+  "version": "1.2.1",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "compile": "tsc --noEmit",
+    "postinstall": "wxt prepare"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "wxt": "^0.20.27"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.9.3"
+  }
+}
