@@ -24,6 +24,7 @@
         <button class="tab-btn active" data-tab="solar" role="tab" aria-selected="true">Solar Activity</button>
         <button class="tab-btn" data-tab="band" role="tab" aria-selected="false">Band Activity</button>
         <button class="tab-btn" data-tab="contests" role="tab" aria-selected="false">Contests</button>
+        <button class="tab-btn" data-tab="beacons" role="tab" aria-selected="false">Beacons</button>
       </nav>
 
       <main id="panel-solar" class="tab-panel content">
@@ -54,6 +55,20 @@
         <ul id="contest-list" class="contest-list">
           <li class="loading">Fetching contest calendar…</li>
         </ul>
+      </main>
+
+      <main id="panel-beacons" class="tab-panel content" hidden>
+        <p class="contests-intro">NCDXF/IARU beacons — 18 stations transmit in rotation, 10 seconds each, cycling every 3 minutes.</p>
+        <div class="beacon-countdown">
+          <span id="beacon-slot-badge" class="beacon-slot-badge">—</span>
+          <span id="beacon-countdown-text">next change in —s</span>
+        </div>
+        <table class="band-table beacon-table">
+          <thead><tr><th>Freq (MHz)</th><th>Beacon</th><th>Location</th></tr></thead>
+          <tbody id="beacon-rows"></tbody>
+        </table>
+        <p class="section-title beacon-rotation-title">Full Rotation</p>
+        <ol id="beacon-rotation" class="beacon-rotation"></ol>
       </main>
 
       <footer class="app-footer">

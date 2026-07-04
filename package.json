@@ -1,8 +1,8 @@
 {
   "name": "hf-toolkit",
-  "description": "HF ham radio toolkit: solar conditions, band activity heatmap, and contest calendar in one popup",
+  "description": "HF ham radio toolkit: solar conditions, band activity heatmap, contest calendar, and NCDXF beacon schedule in one popup",
   "private": true,
-  "version": "1.2.1",
+  "version": "1.3.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",

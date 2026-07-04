@@ -6,7 +6,7 @@
 
 **A ham radio HF toolkit for your browser toolbar.**
 
-Solar-weather conditions, a live DX spot heatmap, and the contest calendar — in one popup, updated automatically in the background. More tools planned.
+Solar-weather conditions, a live DX spot heatmap, the contest calendar, and the NCDXF beacon schedule — in one popup, updated automatically in the background. More tools planned.
 
 </div>
 
@@ -16,19 +16,22 @@ Solar-weather conditions, a live DX spot heatmap, and the contest calendar — i
 
 <table>
 <tr>
-<td align="center" width="33%"><b>Solar Activity</b></td>
-<td align="center" width="33%"><b>Band Activity</b></td>
-<td align="center" width="33%"><b>Contests</b></td>
+<td align="center" width="25%"><b>Solar Activity</b></td>
+<td align="center" width="25%"><b>Band Activity</b></td>
+<td align="center" width="25%"><b>Contests</b></td>
+<td align="center" width="25%"><b>Beacons</b></td>
 </tr>
 <tr>
-<td><img src="screenshots/solar-activity-light.png" width="260" /></td>
-<td><img src="screenshots/band-activity-light.png" width="260" /></td>
-<td><img src="screenshots/contests-light.png" width="260" /></td>
+<td><img src="screenshots/solar-activity-light.png" width="220" /></td>
+<td><img src="screenshots/band-activity-light.png" width="220" /></td>
+<td><img src="screenshots/contests-light.png" width="220" /></td>
+<td><img src="screenshots/beacons-light.png" width="220" /></td>
 </tr>
 <tr>
-<td><img src="screenshots/solar-activity-dark.png" width="260" /></td>
-<td><img src="screenshots/band-activity-dark.png" width="260" /></td>
-<td><img src="screenshots/contests-dark.png" width="260" /></td>
+<td><img src="screenshots/solar-activity-dark.png" width="220" /></td>
+<td><img src="screenshots/band-activity-dark.png" width="220" /></td>
+<td><img src="screenshots/contests-dark.png" width="220" /></td>
+<td><img src="screenshots/beacons-dark.png" width="220" /></td>
 </tr>
 </table>
 
@@ -66,6 +69,15 @@ Full-length HF contests pulled from the [WA7BNM Contest Calendar](https://www.co
 - Click through to each contest's rules page
 - Cached for **1 hour**
 
+### 📻 Beacons
+
+A live clock for the [NCDXF/IARU International Beacon Project](https://www.ncdxf.org/beacon/) — 18 stations around the world transmitting in a fixed rotation on 14.100, 18.110, 21.150, 24.930, and 28.200 MHz:
+
+- Shows exactly which beacon is transmitting on each of the 5 bands **right now**, with a live countdown to the next 10-second change
+- Full 18-station rotation reference, with the currently-active stations highlighted
+- Great for judging real-time propagation by ear — if you can hear a beacon from the other side of the world, that band is open
+- Pure client-side clock math (verified against NCDXF's own published schedule algorithm) — **no network requests, no extra permissions, no caching needed**
+
 ### 🔔 Alerts (opt-in)
 
 Click the bell icon to turn on background notifications for:
@@ -92,6 +104,7 @@ Alerts are edge-triggered — you're notified once when a condition starts, not 
 | N0NBH | Solar conditions, K-index, band conditions | [hamqsl.com](https://www.hamqsl.com/solar101.html) |
 | DXHeat | Band activity heatmap (DX cluster spots) | [dxheat.com](https://dxheat.com/) |
 | WA7BNM | Contest calendar | [contestcalendar.com](https://www.contestcalendar.com/) |
+| NCDXF/IARU | Beacon schedule (computed locally, no fetch) | [ncdxf.org/beacon](https://www.ncdxf.org/beacon/) |
 
 ## Permissions
 
@@ -137,13 +150,14 @@ Built with [WXT](https://wxt.dev/) (vanilla TypeScript, Manifest V3) and [fast-x
 ```
 entrypoints/
   background.ts       # alarm-driven fetch + alert checks
-  popup/               # the three-tab popup UI
+  popup/               # the four-tab popup UI
 lib/
   solar-store.ts       # solar feed fetch, parse, 7-day history storage
   parse-solar-xml.ts   # hamqsl.com XML → SolarSnapshot
   band-activity.ts     # dxheat.com fetch, caching, noise filtering
   heatmap-canvas.ts    # canvas heatmap rendering (grid + color scale)
   contests.ts          # WA7BNM RSS fetch, parsing, caching
+  beacons.ts           # NCDXF beacon schedule (pure clock math, no fetch)
   alerts.ts            # threshold notification logic
   constants.ts         # storage keys, thresholds, cache durations
 public/icon/           # extension icons (source SVG lives in icon-source.svg)

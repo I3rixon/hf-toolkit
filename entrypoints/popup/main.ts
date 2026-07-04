@@ -1,6 +1,7 @@
 import { browser } from 'wxt/browser';
 import './style.css';
 import { getAlertsEnabled, setAlertsEnabled } from '../../lib/alerts';
+import { BEACONS, getBandStatuses, msRemainingInSlot } from '../../lib/beacons';
 import { CONTINENTS, MIN_SPOT_THRESHOLD, fetchAndCacheBandActivity, getCachedBandActivity } from '../../lib/band-activity';
 import type { BandActivityData } from '../../lib/band-activity';
 import { CHART_BUCKET_MS, HISTORY_RETENTION_MS, STORAGE_KEYS } from '../../lib/constants';
@@ -27,6 +28,7 @@ const tabPanels = {
   solar: document.getElementById('panel-solar')!,
   band: document.getElementById('panel-band')!,
   contests: document.getElementById('panel-contests')!,
+  beacons: document.getElementById('panel-beacons')!,
 };
 
 const continentSelect = document.getElementById('continent-select') as HTMLSelectElement;
@@ -35,8 +37,12 @@ const bandLoadingEl = document.getElementById('band-loading')!;
 const bandCaptionEl = document.getElementById('band-caption')!;
 const legendMaxEl = document.getElementById('legend-max')!;
 const contestListEl = document.getElementById('contest-list')!;
+const beaconRowsEl = document.getElementById('beacon-rows')!;
+const beaconRotationEl = document.getElementById('beacon-rotation')!;
+const beaconSlotBadgeEl = document.getElementById('beacon-slot-badge')!;
+const beaconCountdownEl = document.getElementById('beacon-countdown-text')!;
 
-type TabName = 'solar' | 'band' | 'contests';
+type TabName = 'solar' | 'band' | 'contests' | 'beacons';
 let activeTab: TabName = 'solar';
 let latestBandData: BandActivityData | null = null;
 let latestContests: ContestEntry[] | null = null;
@@ -100,6 +106,7 @@ function setActiveTab(tab: TabName) {
   tabPanels.solar.hidden = tab !== 'solar';
   tabPanels.band.hidden = tab !== 'band';
   tabPanels.contests.hidden = tab !== 'contests';
+  tabPanels.beacons.hidden = tab !== 'beacons';
 
   if (tab === 'solar') {
     pageTitleEl.textContent = 'Solar Activity';
@@ -116,7 +123,7 @@ function setActiveTab(tab: TabName) {
     } else {
       renderBandCanvas();
     }
-  } else {
+  } else if (tab === 'contests') {
     pageTitleEl.textContent = 'Contests';
     sourceLinkEl.href = 'https://www.contestcalendar.com/';
     sourceLinkEl.textContent = 'Source: WA7BNM Contest Calendar';
@@ -127,6 +134,12 @@ function setActiveTab(tab: TabName) {
     } else {
       renderContestList();
     }
+  } else {
+    pageTitleEl.textContent = 'Beacons';
+    sourceLinkEl.href = 'https://www.ncdxf.org/beacon/';
+    sourceLinkEl.textContent = 'Source: NCDXF/IARU';
+    staleBadgeEl.hidden = true;
+    renderBeacons();
   }
 }
 
@@ -449,6 +462,41 @@ async function loadContests(forceRefresh: boolean) {
   }
 }
 
+// ---------- Beacons tab ----------
+
+function renderBeacons() {
+  const now = Date.now();
+  const statuses = getBandStatuses(now);
+  const activeCalls = new Set(statuses.map((s) => s.beacon.call));
+
+  beaconRowsEl.innerHTML = statuses
+    .map(
+      (s) => `
+      <tr>
+        <td class="band-name">${s.frequency}</td>
+        <td><span class="beacon-call">${s.beacon.call}</span></td>
+        <td>${s.beacon.location}</td>
+      </tr>`
+    )
+    .join('');
+
+  beaconRotationEl.innerHTML = BEACONS.map(
+    (b) => `<li class="${activeCalls.has(b.call) ? 'active' : ''}">${b.call}</li>`
+  ).join('');
+
+  const secondsLeft = Math.ceil(msRemainingInSlot(now) / 1000);
+  beaconSlotBadgeEl.textContent = `:${String(new Date(now).getUTCSeconds()).padStart(2, '0')} UTC`;
+  beaconCountdownEl.textContent = `next change in ${secondsLeft}s`;
+
+  if (activeTab === 'beacons') {
+    updatedLineEl.textContent = `Live — updates every 10s`;
+  }
+}
+
+setInterval(() => {
+  if (activeTab === 'beacons') renderBeacons();
+}, 1000);
+
 // ---------- Refresh button (context-aware) ----------
 
 refreshBtn.addEventListener('click', () => {
@@ -456,8 +504,10 @@ refreshBtn.addEventListener('click', () => {
     doRefreshSolar();
   } else if (activeTab === 'band') {
     loadBand(continentSelect.value, true);
-  } else {
+  } else if (activeTab === 'contests') {
     loadContests(true);
+  } else {
+    renderBeacons();
   }
 });
 
