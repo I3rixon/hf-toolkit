@@ -106,7 +106,15 @@ No other sites are contacted, and nothing you type or browse is collected.
 
 ---
 
-## Installation (unpacked / developer mode)
+## Installation
+
+### Option A: download a release (no build tools needed)
+
+1. Grab the latest `hf-toolkit-*-chrome.zip` from the [Releases page](https://github.com/I3rixon/hf-toolkit/releases) and unzip it
+2. Open `chrome://extensions`, enable **Developer mode** (top right)
+3. Click **Load unpacked** and select the unzipped folder
+
+### Option B: build from source
 
 1. `npm install`
 2. `npm run build`
