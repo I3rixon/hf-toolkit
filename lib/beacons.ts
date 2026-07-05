@@ -10,27 +10,29 @@ export const BEACON_FREQUENCIES = ['14.100', '18.110', '21.150', '24.930', '28.2
 export interface Beacon {
   call: string;
   location: string;
+  lat: number;
+  lon: number;
 }
 
 export const BEACONS: Beacon[] = [
-  { call: '4U1UN', location: 'United Nations, New York, USA' },
-  { call: 'VE8AT', location: 'Inuvik, NT, Canada' },
-  { call: 'W6WX', location: 'Mt Umunhum, California, USA' },
-  { call: 'KH6RS', location: 'Maui, Hawaii, USA' },
-  { call: 'ZL6B', location: 'Masterton, New Zealand' },
-  { call: 'VK6RBP', location: 'Rolystone, Australia' },
-  { call: 'JA2IGY', location: 'Mt Asama, Japan' },
-  { call: 'RR9O', location: 'Novosibirsk, Russia' },
-  { call: 'VR2B', location: 'Hong Kong' },
-  { call: '4S7B', location: 'Colombo, Sri Lanka' },
-  { call: 'ZS6DN', location: 'Pretoria, South Africa' },
-  { call: '5Z4B', location: 'Kikuyu, Kenya' },
-  { call: '4X6TU', location: 'Tel Aviv, Israel' },
-  { call: 'OH2B', location: 'Lohja, Finland' },
-  { call: 'CS3B', location: 'Madeira' },
-  { call: 'LU4AA', location: 'Buenos Aires, Argentina' },
-  { call: 'OA4B', location: 'Lima, Peru' },
-  { call: 'YV5B', location: 'Caracas, Venezuela' },
+  { call: '4U1UN', location: 'United Nations, New York, USA', lat: 40.75, lon: -73.97 },
+  { call: 'VE8AT', location: 'Inuvik, NT, Canada', lat: 68.36, lon: -133.72 },
+  { call: 'W6WX', location: 'Mt Umunhum, California, USA', lat: 37.15, lon: -121.89 },
+  { call: 'KH6RS', location: 'Maui, Hawaii, USA', lat: 20.75, lon: -156.45 },
+  { call: 'ZL6B', location: 'Masterton, New Zealand', lat: -40.96, lon: 175.65 },
+  { call: 'VK6RBP', location: 'Rolystone, Australia', lat: -32.08, lon: 116.05 },
+  { call: 'JA2IGY', location: 'Mt Asama, Japan', lat: 36.4, lon: 138.5 },
+  { call: 'RR9O', location: 'Novosibirsk, Russia', lat: 55.0, lon: 82.9 },
+  { call: 'VR2B', location: 'Hong Kong', lat: 22.3, lon: 114.2 },
+  { call: '4S7B', location: 'Colombo, Sri Lanka', lat: 6.93, lon: 79.85 },
+  { call: 'ZS6DN', location: 'Pretoria, South Africa', lat: -25.75, lon: 28.19 },
+  { call: '5Z4B', location: 'Kikuyu, Kenya', lat: -1.24, lon: 36.66 },
+  { call: '4X6TU', location: 'Tel Aviv, Israel', lat: 32.08, lon: 34.78 },
+  { call: 'OH2B', location: 'Lohja, Finland', lat: 60.25, lon: 24.07 },
+  { call: 'CS3B', location: 'Madeira', lat: 32.65, lon: -16.91 },
+  { call: 'LU4AA', location: 'Buenos Aires, Argentina', lat: -34.6, lon: -58.4 },
+  { call: 'OA4B', location: 'Lima, Peru', lat: -12.05, lon: -77.05 },
+  { call: 'YV5B', location: 'Caracas, Venezuela', lat: 10.5, lon: -66.9 },
 ];
 
 const SLOT_MS = 10_000;

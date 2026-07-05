@@ -16,6 +16,7 @@ import { solarElevation, subsolarPoint } from '../../lib/grayline';
 import { GRAYLINE_THEMES, drawGrayline } from '../../lib/grayline-canvas';
 import { ANTENNA_TYPES, calcAntenna, getAntennaType } from '../../lib/antenna';
 import { ANTENNA_THEMES, drawAntennaDiagram } from '../../lib/antenna-canvas';
+import { BEACON_MAP_THEMES, drawBeaconMap } from '../../lib/beacon-map-canvas';
 
 const solarPanelEl = document.getElementById('panel-solar')!;
 const updatedLineEl = document.getElementById('updated-line')!;
@@ -50,6 +51,9 @@ const beaconRowsEl = document.getElementById('beacon-rows')!;
 const beaconRotationEl = document.getElementById('beacon-rotation')!;
 const beaconSlotBadgeEl = document.getElementById('beacon-slot-badge')!;
 const beaconCountdownEl = document.getElementById('beacon-countdown-text')!;
+const beaconHomeGridEl = document.getElementById('beacon-home-grid') as HTMLInputElement;
+const beaconMapCanvas = document.getElementById('beacon-map-canvas') as HTMLCanvasElement;
+const beaconMapCaptionEl = document.getElementById('beacon-map-caption')!;
 
 const graylineCanvas = document.getElementById('grayline-canvas') as HTMLCanvasElement;
 const graylineCaptionEl = document.getElementById('grayline-caption')!;
@@ -78,6 +82,8 @@ let activeTab: TabName = 'solar';
 let latestBandData: BandActivityData | null = null;
 let latestContests: ContestEntry[] | null = null;
 let contestsFetchedAt: number | null = null;
+// Home QTH grid — shared between the Beam, Grayline, and Beacons tabs.
+let myGridValue = '';
 
 // ---------- Theme ----------
 
@@ -106,6 +112,7 @@ themeToggleBtn.addEventListener('click', async () => {
   if (activeTab === 'band') renderBandCanvas();
   if (activeTab === 'grayline') renderGrayline();
   if (activeTab === 'antenna') renderAntenna();
+  if (activeTab === 'beacons') renderBeacons();
 });
 
 // ---------- Alerts ----------
@@ -519,6 +526,10 @@ async function loadContests(forceRefresh: boolean) {
 
 // ---------- Beacons tab ----------
 
+function fmtKm(km: number): string {
+  return `${Math.round(km).toLocaleString()} km`;
+}
+
 function renderBeacons() {
   const now = Date.now();
   const statuses = getBandStatuses(now);
@@ -543,18 +554,39 @@ function renderBeacons() {
   beaconSlotBadgeEl.textContent = `:${String(new Date(now).getUTCSeconds()).padStart(2, '0')} UTC`;
   beaconCountdownEl.textContent = `next change in ${secondsLeft}s`;
 
+  const mapTheme = BEACON_MAP_THEMES[isDarkMode() ? 'dark' : 'light'];
+  const home = isValidGrid(myGridValue) ? gridToLatLon(myGridValue) : null;
+  drawBeaconMap(beaconMapCanvas, { beacons: BEACONS, activeCalls, home, theme: mapTheme });
+
+  if (home) {
+    const nearest = [...statuses].sort(
+      (a, b) => greatCircle(home, a.beacon).distanceKm - greatCircle(home, b.beacon).distanceKm
+    )[0];
+    const r = greatCircle(home, nearest.beacon);
+    beaconMapCaptionEl.textContent = `Home ${myGridValue.toUpperCase()} · nearest active beacon is ${nearest.beacon.call} (${fmtKm(r.distanceKm)}, ${compassPoint(r.shortPathBearing)}) on ${nearest.frequency} MHz.`;
+  } else {
+    beaconMapCaptionEl.textContent = 'Set your Home grid above to see distance and heading to each beacon.';
+  }
+
   if (activeTab === 'beacons') {
     updatedLineEl.textContent = `Live — updates every 10s`;
   }
 }
+
+beaconHomeGridEl.addEventListener('input', () => {
+  myGridValue = beaconHomeGridEl.value.trim();
+  beamMyGridEl.value = beaconHomeGridEl.value;
+  browser.storage.local.set({ [STORAGE_KEYS.myGrid]: myGridValue });
+  renderBeacons();
+  if (activeTab === 'beam') renderBeam();
+  if (activeTab === 'grayline') renderGrayline();
+});
 
 setInterval(() => {
   if (activeTab === 'beacons') renderBeacons();
 }, 1000);
 
 // ---------- Grayline tab ----------
-
-let myGridValue = '';
 
 function fmtLat(lat: number): string {
   return `${Math.abs(lat).toFixed(1)}°${lat >= 0 ? 'N' : 'S'}`;
@@ -583,7 +615,7 @@ function renderGrayline() {
       elev >= 6 ? 'in daylight' : elev >= -0.8 ? 'on the grayline' : elev >= -6 ? 'in twilight' : 'in darkness';
     caption += ` Your QTH (${myGridValue.toUpperCase()}) is ${state} — sun ${elev >= 0 ? '+' : ''}${elev.toFixed(0)}°.`;
   } else {
-    caption += ' Set your grid on the Beam tab to plot your QTH.';
+    caption += ' Set your Home grid on the Beam or Beacons tab to plot your QTH.';
   }
   graylineCaptionEl.textContent = caption;
 
@@ -667,11 +699,13 @@ function renderBeam() {
 
 function onBeamInput() {
   myGridValue = beamMyGridEl.value.trim();
+  beaconHomeGridEl.value = beamMyGridEl.value;
   browser.storage.local.set({
-    [STORAGE_KEYS.myGrid]: beamMyGridEl.value.trim(),
+    [STORAGE_KEYS.myGrid]: myGridValue,
     [STORAGE_KEYS.dxGrid]: beamDxGridEl.value.trim(),
   });
   renderBeam();
+  if (activeTab === 'beacons') renderBeacons();
 }
 
 beamMyGridEl.addEventListener('input', onBeamInput);
@@ -683,6 +717,7 @@ async function initGrids() {
   const dx = (stored[STORAGE_KEYS.dxGrid] as string | undefined) ?? '';
   beamMyGridEl.value = my;
   beamDxGridEl.value = dx;
+  beaconHomeGridEl.value = my;
   myGridValue = my.trim();
 }
 

@@ -1,57 +1,11 @@
 // Renders an equirectangular world map with the live day/night terminator.
 import type { LatLon } from './maidenhead';
 import { solarElevation } from './grayline';
-import { LAND_RINGS } from './world-map-data';
+import { MAP_W as W, MAP_H as H, WORLD_MAP_THEMES, lonToX, latToY, drawLand, drawGraticule } from './world-map-base';
+import type { WorldMapTheme } from './world-map-base';
 
-// Internal render resolution (2x the ~340px display width for crisp scaling).
-const W = 680;
-const H = 340;
-
-export interface GraylineTheme {
-  ocean: string;
-  land: string;
-  graticule: string;
-}
-
-export const GRAYLINE_THEMES: Record<'light' | 'dark', GraylineTheme> = {
-  light: { ocean: '#bcd3e8', land: '#d7e0c8', graticule: 'rgba(0,0,0,0.10)' },
-  dark: { ocean: '#0f1626', land: '#28323f', graticule: 'rgba(255,255,255,0.08)' },
-};
-
-const lonToX = (lon: number) => ((lon + 180) / 360) * W;
-const latToY = (lat: number) => ((90 - lat) / 180) * H;
-
-function drawLand(ctx: CanvasRenderingContext2D, color: string) {
-  ctx.fillStyle = color;
-  for (const ring of LAND_RINGS) {
-    ctx.beginPath();
-    for (let i = 0; i < ring.length; i += 2) {
-      const x = lonToX(ring[i]);
-      const y = latToY(ring[i + 1]);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.fill();
-  }
-}
-
-function drawGraticule(ctx: CanvasRenderingContext2D, color: string) {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let lon = -150; lon <= 150; lon += 30) {
-    const x = lonToX(lon);
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, H);
-  }
-  for (let lat = -60; lat <= 60; lat += 30) {
-    const y = latToY(lat);
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-  }
-  ctx.stroke();
-}
+export type GraylineTheme = WorldMapTheme;
+export const GRAYLINE_THEMES = WORLD_MAP_THEMES;
 
 // Paints the night/twilight/grayline overlay. Built on an offscreen canvas and
 // composited with drawImage so it alpha-blends over the base map — putImageData

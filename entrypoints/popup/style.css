@@ -556,18 +556,25 @@ body {
   font-weight: 700;
 }
 
-/* Grayline tab */
-.grayline-wrap {
+/* Shared world-map canvas (Grayline + Beacons) */
+.world-map-wrap {
   padding: 0;
   overflow: hidden;
   min-height: 0;
+  margin-bottom: 10px;
 }
 
-.grayline-wrap canvas {
+.world-map-wrap canvas {
   display: block;
   width: 100%;
   height: auto;
   border-radius: 9px;
+}
+
+/* Beacons tab */
+.beacon-home-row {
+  max-width: 220px;
+  margin-bottom: 10px;
 }
 
 /* Beam Heading tab */

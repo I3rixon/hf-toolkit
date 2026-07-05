@@ -6,7 +6,7 @@
 
 **A ham radio HF toolkit for your browser toolbar.**
 
-Solar-weather conditions, a live DX spot heatmap, the contest calendar, the NCDXF beacon schedule, a live grayline map, a beam-heading calculator, and an antenna length calculator — in one popup, updated automatically in the background. More tools planned.
+Solar-weather conditions, a live DX spot heatmap, the contest calendar, a live NCDXF beacon map, a live grayline map, a beam-heading calculator, and an antenna length calculator — in one popup, updated automatically in the background. More tools planned.
 
 By [I3rixon](https://github.com/I3rixon)
 
@@ -94,9 +94,11 @@ Full-length HF contests pulled from the [WA7BNM Contest Calendar](https://www.co
 
 ### 📻 Beacons
 
-A live clock for the [NCDXF/IARU International Beacon Project](https://www.ncdxf.org/beacon/) — 18 stations around the world transmitting in a fixed rotation on 14.100, 18.110, 21.150, 24.930, and 28.200 MHz:
+A live clock and world map for the [NCDXF/IARU International Beacon Project](https://www.ncdxf.org/beacon/) — 18 stations around the world transmitting in a fixed rotation on 14.100, 18.110, 21.150, 24.930, and 28.200 MHz:
 
 - Shows exactly which beacon is transmitting on each of the 5 bands **right now**, with a live countdown to the next 10-second change
+- **World map** plots all 18 beacon sites, with the currently-active ones lit up in amber and labeled by callsign, updating every second
+- **Home grid** field (accepts a 4- or 6-character Maidenhead locator, e.g. `KN67PV`) plots a 📍 marker for your own QTH and shows the distance/heading to the nearest active beacon — shared with the Beam and Grayline tabs
 - Full 18-station rotation reference, with the currently-active stations highlighted
 - Great for judging real-time propagation by ear — if you can hear a beacon from the other side of the world, that band is open
 - Pure client-side clock math (verified against NCDXF's own published schedule algorithm) — **no network requests, no extra permissions, no caching needed**
@@ -116,7 +118,7 @@ A great-circle calculator between two Maidenhead grid squares:
 
 - Enter **your grid** and a **DX grid** (4- or 6-character locators) and get the **short-path** and **long-path** beam headings plus distance in km and miles
 - A compass rose points the short-path bearing (solid) and long-path (dashed) so you can aim a directional antenna at a glance
-- Your grid is remembered and shared with the Grayline map — **pure math, no network, no permissions**
+- Your grid is remembered and shared with the Grayline map and the Beacons map's Home grid field — **pure math, no network, no permissions**
 
 ### 📏 Antenna Calculator
 
@@ -153,10 +155,10 @@ Alerts are edge-triggered — you're notified once when a condition starts, not 
 | N0NBH | Solar conditions, K-index, band conditions | [hamqsl.com](https://www.hamqsl.com/solar101.html) |
 | DXHeat | Band activity heatmap (DX cluster spots) | [dxheat.com](https://dxheat.com/) |
 | WA7BNM | Contest calendar | [contestcalendar.com](https://www.contestcalendar.com/) |
-| NCDXF/IARU | Beacon schedule (computed locally, no fetch) | [ncdxf.org/beacon](https://www.ncdxf.org/beacon/) |
-| Natural Earth | Grayline world map (bundled, public domain) | [naturalearthdata.com](https://www.naturalearthdata.com/) |
+| NCDXF/IARU | Beacon schedule + station locations (computed locally, no fetch) | [ncdxf.org/beacon](https://www.ncdxf.org/beacon/) |
+| Natural Earth | Grayline/Beacon world maps (bundled, public domain) | [naturalearthdata.com](https://www.naturalearthdata.com/) |
 
-The Grayline, Beam Heading, and Antenna Calculator tabs are computed entirely on-device — no network requests and no extra permissions.
+The Beacons map, Grayline, Beam Heading, and Antenna Calculator tabs are computed entirely on-device — no network requests and no extra permissions.
 
 ## Permissions
 
@@ -209,11 +211,13 @@ lib/
   band-activity.ts     # dxheat.com fetch, caching, noise filtering
   heatmap-canvas.ts    # canvas heatmap rendering (grid + color scale)
   contests.ts          # WA7BNM RSS fetch, parsing, caching
-  beacons.ts           # NCDXF beacon schedule (pure clock math, no fetch)
+  beacons.ts           # NCDXF beacon schedule + station coordinates (pure clock math, no fetch)
   maidenhead.ts        # Maidenhead grid <-> lat/lon
   geo.ts               # great-circle distance + beam headings
   grayline.ts          # subsolar point + solar elevation math
+  world-map-base.ts    # shared equirectangular map projection + land/graticule rendering
   grayline-canvas.ts   # day/night terminator map rendering
+  beacon-map-canvas.ts # beacon location map rendering (active/inactive + home marker)
   world-map-data.ts    # bundled Natural Earth land polygons
   antenna.ts           # resonant wire-length formulas (dipole/vertical/loop)
   antenna-canvas.ts    # antenna schematic diagram rendering

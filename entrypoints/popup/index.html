@@ -62,10 +62,20 @@
 
       <main id="panel-beacons" class="tab-panel content" hidden>
         <p class="contests-intro">NCDXF/IARU beacons — 18 stations transmit in rotation, 10 seconds each, cycling every 3 minutes.</p>
+        <div class="beacon-home-row">
+          <label class="beam-field">
+            <span>Home grid</span>
+            <input id="beacon-home-grid" type="text" maxlength="6" placeholder="KN67PV" autocomplete="off" spellcheck="false" />
+          </label>
+        </div>
         <div class="beacon-countdown">
           <span id="beacon-slot-badge" class="beacon-slot-badge">—</span>
           <span id="beacon-countdown-text">next change in —s</span>
         </div>
+        <div class="canvas-wrap world-map-wrap">
+          <canvas id="beacon-map-canvas"></canvas>
+        </div>
+        <p id="beacon-map-caption" class="band-caption"></p>
         <table class="band-table beacon-table">
           <thead><tr><th>Freq (MHz)</th><th>Beacon</th><th>Location</th></tr></thead>
           <tbody id="beacon-rows"></tbody>
@@ -76,7 +86,7 @@
 
       <main id="panel-grayline" class="tab-panel content" hidden>
         <p class="contests-intro">Live day/night terminator. The amber <b>grayline</b> band is where HF paths are often enhanced at dawn/dusk.</p>
-        <div class="canvas-wrap grayline-wrap">
+        <div class="canvas-wrap world-map-wrap">
           <canvas id="grayline-canvas"></canvas>
         </div>
         <p id="grayline-caption" class="band-caption"></p>
