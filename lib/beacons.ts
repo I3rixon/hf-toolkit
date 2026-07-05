@@ -7,6 +7,14 @@
 
 export const BEACON_FREQUENCIES = ['14.100', '18.110', '21.150', '24.930', '28.200'];
 
+export const BAND_LABELS: Record<string, string> = {
+  '14.100': '20m',
+  '18.110': '17m',
+  '21.150': '15m',
+  '24.930': '12m',
+  '28.200': '10m',
+};
+
 export interface Beacon {
   call: string;
   location: string;

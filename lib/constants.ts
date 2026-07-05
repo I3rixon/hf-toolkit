@@ -19,6 +19,7 @@ export const STORAGE_KEYS = {
   antennaFreq: 'solar:antennaFreq',
   antennaType: 'solar:antennaType',
   antennaUnit: 'solar:antennaUnit',
+  beaconBandFilter: 'solar:beaconBandFilter',
 } as const;
 
 export const BAND_ACTIVITY_CACHE_MS = 30 * 60 * 1000;

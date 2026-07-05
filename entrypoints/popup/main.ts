@@ -1,7 +1,7 @@
 import { browser } from 'wxt/browser';
 import './style.css';
 import { getAlertsEnabled, setAlertsEnabled } from '../../lib/alerts';
-import { BEACONS, getBandStatuses, msRemainingInSlot } from '../../lib/beacons';
+import { BAND_LABELS, BEACONS, BEACON_FREQUENCIES, getBandStatuses, msRemainingInSlot } from '../../lib/beacons';
 import { CONTINENTS, MIN_SPOT_THRESHOLD, fetchAndCacheBandActivity, getCachedBandActivity } from '../../lib/band-activity';
 import type { BandActivityData } from '../../lib/band-activity';
 import { CHART_BUCKET_MS, HISTORY_RETENTION_MS, STORAGE_KEYS } from '../../lib/constants';
@@ -12,7 +12,7 @@ import { STALE_THRESHOLD_MS, fetchAndStore, getStoredData, msSinceLastFetch } fr
 import type { KHistoryPoint, SolarSnapshot } from '../../lib/types';
 import { gridToLatLon, isValidGrid, latLonToGrid } from '../../lib/maidenhead';
 import { compassPoint, greatCircle } from '../../lib/geo';
-import { solarElevation, subsolarPoint } from '../../lib/grayline';
+import { solarElevation, subsolarPoint, sunTimes } from '../../lib/grayline';
 import { GRAYLINE_THEMES, drawGrayline } from '../../lib/grayline-canvas';
 import { ANTENNA_TYPES, calcAntenna, getAntennaType } from '../../lib/antenna';
 import { ANTENNA_THEMES, drawAntennaDiagram } from '../../lib/antenna-canvas';
@@ -54,9 +54,14 @@ const beaconCountdownEl = document.getElementById('beacon-countdown-text')!;
 const beaconHomeGridEl = document.getElementById('beacon-home-grid') as HTMLInputElement;
 const beaconMapCanvas = document.getElementById('beacon-map-canvas') as HTMLCanvasElement;
 const beaconMapCaptionEl = document.getElementById('beacon-map-caption')!;
+const beaconBandFilterEl = document.getElementById('beacon-band-filter')!;
 
 const graylineCanvas = document.getElementById('grayline-canvas') as HTMLCanvasElement;
 const graylineCaptionEl = document.getElementById('grayline-caption')!;
+const graylineSuntimesEl = document.getElementById('grayline-suntimes')!;
+const graylineSunriseEl = document.getElementById('grayline-sunrise')!;
+const graylineNoonEl = document.getElementById('grayline-noon')!;
+const graylineSunsetEl = document.getElementById('grayline-sunset')!;
 const beamMyGridEl = document.getElementById('beam-my-grid') as HTMLInputElement;
 const beamDxGridEl = document.getElementById('beam-dx-grid') as HTMLInputElement;
 const beamErrorEl = document.getElementById('beam-error')!;
@@ -84,6 +89,8 @@ let latestContests: ContestEntry[] | null = null;
 let contestsFetchedAt: number | null = null;
 // Home QTH grid — shared between the Beam, Grayline, and Beacons tabs.
 let myGridValue = '';
+// Beacons band filter — 'all' or one of BEACON_FREQUENCIES.
+let beaconBandFilter = 'all';
 
 // ---------- Theme ----------
 
@@ -532,7 +539,8 @@ function fmtKm(km: number): string {
 
 function renderBeacons() {
   const now = Date.now();
-  const statuses = getBandStatuses(now);
+  const allStatuses = getBandStatuses(now);
+  const statuses = beaconBandFilter === 'all' ? allStatuses : allStatuses.filter((s) => s.frequency === beaconBandFilter);
   const activeCalls = new Set(statuses.map((s) => s.beacon.call));
 
   beaconRowsEl.innerHTML = statuses
@@ -569,9 +577,28 @@ function renderBeacons() {
   }
 
   if (activeTab === 'beacons') {
-    updatedLineEl.textContent = `Live — updates every 10s`;
+    updatedLineEl.textContent =
+      beaconBandFilter === 'all' ? 'Live — updates every 10s' : `Live — ${BAND_LABELS[beaconBandFilter]} only`;
   }
 }
+
+for (const freq of ['all', ...BEACON_FREQUENCIES]) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'band-filter-btn' + (freq === 'all' ? ' active' : '');
+  btn.dataset.freq = freq;
+  btn.textContent = freq === 'all' ? 'All' : BAND_LABELS[freq];
+  beaconBandFilterEl.appendChild(btn);
+}
+
+beaconBandFilterEl.addEventListener('click', (e) => {
+  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.band-filter-btn');
+  if (!btn) return;
+  beaconBandFilter = btn.dataset.freq!;
+  browser.storage.local.set({ [STORAGE_KEYS.beaconBandFilter]: beaconBandFilter });
+  Array.from(beaconBandFilterEl.children).forEach((c) => c.classList.toggle('active', c === btn));
+  renderBeacons();
+});
 
 beaconHomeGridEl.addEventListener('input', () => {
   myGridValue = beaconHomeGridEl.value.trim();
@@ -585,6 +612,17 @@ beaconHomeGridEl.addEventListener('input', () => {
 setInterval(() => {
   if (activeTab === 'beacons') renderBeacons();
 }, 1000);
+
+async function initBeaconBandFilter() {
+  const stored = await browser.storage.local.get(STORAGE_KEYS.beaconBandFilter);
+  const saved = stored[STORAGE_KEYS.beaconBandFilter] as string | undefined;
+  if (saved && (saved === 'all' || BEACON_FREQUENCIES.includes(saved))) {
+    beaconBandFilter = saved;
+    Array.from(beaconBandFilterEl.children).forEach((c) =>
+      c.classList.toggle('active', (c as HTMLElement).dataset.freq === saved)
+    );
+  }
+}
 
 // ---------- Grayline tab ----------
 
@@ -614,7 +652,16 @@ function renderGrayline() {
     const state =
       elev >= 6 ? 'in daylight' : elev >= -0.8 ? 'on the grayline' : elev >= -6 ? 'in twilight' : 'in darkness';
     caption += ` Your QTH (${myGridValue.toUpperCase()}) is ${state} — sun ${elev >= 0 ? '+' : ''}${elev.toFixed(0)}°.`;
+
+    const sun = sunTimes(qth.lat, qth.lon, now);
+    graylineSuntimesEl.hidden = false;
+    graylineSunriseEl.textContent = sun.sunrise ? `${fmtUtc(sun.sunrise)}Z` : '—';
+    graylineNoonEl.textContent = `${fmtUtc(sun.solarNoon)}Z`;
+    graylineSunsetEl.textContent = sun.sunset ? `${fmtUtc(sun.sunset)}Z` : '—';
+    if (sun.polarDay) caption += ' Midnight sun — the sun does not set today.';
+    if (sun.polarNight) caption += ' Polar night — the sun does not rise today.';
   } else {
+    graylineSuntimesEl.hidden = true;
     caption += ' Set your Home grid on the Beam or Beacons tab to plot your QTH.';
   }
   graylineCaptionEl.textContent = caption;
@@ -841,6 +888,7 @@ initTheme();
 initAlerts();
 initGrids();
 initAntenna();
+initBeaconBandFilter();
 initBandContinent().then(() => {
   loadAndRenderSolar().then((latest) => {
     if (msSinceLastFetch(latest) > STALE_THRESHOLD_MS) {

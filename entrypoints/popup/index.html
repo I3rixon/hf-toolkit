@@ -76,6 +76,7 @@
           <canvas id="beacon-map-canvas"></canvas>
         </div>
         <p id="beacon-map-caption" class="band-caption"></p>
+        <div id="beacon-band-filter" class="beacon-band-filter" role="group" aria-label="Filter by band"></div>
         <table class="band-table beacon-table">
           <thead><tr><th>Freq (MHz)</th><th>Beacon</th><th>Location</th></tr></thead>
           <tbody id="beacon-rows"></tbody>
@@ -90,6 +91,20 @@
           <canvas id="grayline-canvas"></canvas>
         </div>
         <p id="grayline-caption" class="band-caption"></p>
+        <div id="grayline-suntimes" class="stat-grid" hidden>
+          <div class="stat-tile">
+            <div class="value" id="grayline-sunrise">—</div>
+            <div class="label">Sunrise</div>
+          </div>
+          <div class="stat-tile">
+            <div class="value" id="grayline-noon">—</div>
+            <div class="label">Solar Noon</div>
+          </div>
+          <div class="stat-tile">
+            <div class="value" id="grayline-sunset">—</div>
+            <div class="label">Sunset</div>
+          </div>
+        </div>
       </main>
 
       <main id="panel-beam" class="tab-panel content" hidden>
