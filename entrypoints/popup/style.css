@@ -53,7 +53,7 @@
 
 body {
   margin: 0;
-  width: 380px;
+  width: 580px;
   max-height: 600px;
   overflow-y: auto;
   background: var(--bg);
