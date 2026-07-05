@@ -6,7 +6,7 @@
 
 **A ham radio HF toolkit for your browser toolbar.**
 
-Solar-weather conditions, a live DX spot heatmap, the contest calendar, and the NCDXF beacon schedule — in one popup, updated automatically in the background. More tools planned.
+Solar-weather conditions, a live DX spot heatmap, the contest calendar, the NCDXF beacon schedule, a live grayline map, and a beam-heading calculator — in one popup, updated automatically in the background. More tools planned.
 
 By [I3rixon](https://github.com/I3rixon)
 
@@ -18,22 +18,34 @@ By [I3rixon](https://github.com/I3rixon)
 
 <table>
 <tr>
-<td align="center" width="25%"><b>Solar Activity</b></td>
-<td align="center" width="25%"><b>Band Activity</b></td>
-<td align="center" width="25%"><b>Contests</b></td>
-<td align="center" width="25%"><b>Beacons</b></td>
+<td align="center"><b>Solar Activity</b></td>
+<td align="center"><b>Band Activity</b></td>
+<td align="center"><b>Contests</b></td>
 </tr>
 <tr>
-<td><img src="screenshots/solar-activity-light.png" width="220" /></td>
-<td><img src="screenshots/band-activity-light.png" width="220" /></td>
-<td><img src="screenshots/contests-light.png" width="220" /></td>
-<td><img src="screenshots/beacons-light.png" width="220" /></td>
+<td><img src="screenshots/solar-light.png" width="240" /></td>
+<td><img src="screenshots/band-light.png" width="240" /></td>
+<td><img src="screenshots/contests-light.png" width="240" /></td>
 </tr>
 <tr>
-<td><img src="screenshots/solar-activity-dark.png" width="220" /></td>
-<td><img src="screenshots/band-activity-dark.png" width="220" /></td>
-<td><img src="screenshots/contests-dark.png" width="220" /></td>
-<td><img src="screenshots/beacons-dark.png" width="220" /></td>
+<td><img src="screenshots/solar-dark.png" width="240" /></td>
+<td><img src="screenshots/band-dark.png" width="240" /></td>
+<td><img src="screenshots/contests-dark.png" width="240" /></td>
+</tr>
+<tr>
+<td align="center"><b>Beacons</b></td>
+<td align="center"><b>Grayline</b></td>
+<td align="center"><b>Beam Heading</b></td>
+</tr>
+<tr>
+<td><img src="screenshots/beacons-light.png" width="240" /></td>
+<td><img src="screenshots/grayline-light.png" width="240" /></td>
+<td><img src="screenshots/beam-light.png" width="240" /></td>
+</tr>
+<tr>
+<td><img src="screenshots/beacons-dark.png" width="240" /></td>
+<td><img src="screenshots/grayline-dark.png" width="240" /></td>
+<td><img src="screenshots/beam-dark.png" width="240" /></td>
 </tr>
 </table>
 
@@ -80,6 +92,23 @@ A live clock for the [NCDXF/IARU International Beacon Project](https://www.ncdxf
 - Great for judging real-time propagation by ear — if you can hear a beacon from the other side of the world, that band is open
 - Pure client-side clock math (verified against NCDXF's own published schedule algorithm) — **no network requests, no extra permissions, no caching needed**
 
+### 🗺️ Grayline
+
+A live day/night terminator map — the classic HF propagation tool:
+
+- Equirectangular world map with the current **terminator** drawn from the real subsolar point (NOAA solar-position algorithm, accurate to ~0.1°)
+- The amber **grayline** band highlights dawn/dusk, where long-haul HF paths are often briefly enhanced
+- The 🔆 marker shows where the Sun is directly overhead right now; set your grid on the Beam tab and a 📍 marker plus a live day/twilight/night readout for **your QTH** appears
+- Redraws every minute — **fully offline**, no network, no permissions (the world map is bundled from public-domain Natural Earth data)
+
+### 🧭 Beam Heading
+
+A great-circle calculator between two Maidenhead grid squares:
+
+- Enter **your grid** and a **DX grid** (4- or 6-character locators) and get the **short-path** and **long-path** beam headings plus distance in km and miles
+- A compass rose points the short-path bearing (solid) and long-path (dashed) so you can aim a directional antenna at a glance
+- Your grid is remembered and shared with the Grayline map — **pure math, no network, no permissions**
+
 ### 🔔 Alerts (opt-in)
 
 Click the bell icon to turn on background notifications for:
@@ -107,6 +136,9 @@ Alerts are edge-triggered — you're notified once when a condition starts, not 
 | DXHeat | Band activity heatmap (DX cluster spots) | [dxheat.com](https://dxheat.com/) |
 | WA7BNM | Contest calendar | [contestcalendar.com](https://www.contestcalendar.com/) |
 | NCDXF/IARU | Beacon schedule (computed locally, no fetch) | [ncdxf.org/beacon](https://www.ncdxf.org/beacon/) |
+| Natural Earth | Grayline world map (bundled, public domain) | [naturalearthdata.com](https://www.naturalearthdata.com/) |
+
+The Grayline and Beam Heading tabs are computed entirely on-device — no network requests and no extra permissions.
 
 ## Permissions
 
@@ -160,6 +192,11 @@ lib/
   heatmap-canvas.ts    # canvas heatmap rendering (grid + color scale)
   contests.ts          # WA7BNM RSS fetch, parsing, caching
   beacons.ts           # NCDXF beacon schedule (pure clock math, no fetch)
+  maidenhead.ts        # Maidenhead grid <-> lat/lon
+  geo.ts               # great-circle distance + beam headings
+  grayline.ts          # subsolar point + solar elevation math
+  grayline-canvas.ts   # day/night terminator map rendering
+  world-map-data.ts    # bundled Natural Earth land polygons
   alerts.ts            # threshold notification logic
   constants.ts         # storage keys, thresholds, cache durations
 public/icon/           # extension icons (source SVG lives in icon-source.svg)

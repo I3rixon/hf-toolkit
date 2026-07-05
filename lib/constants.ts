@@ -14,6 +14,8 @@ export const STORAGE_KEYS = {
   alertsEnabled: 'solar:alertsEnabled',
   alertState: 'solar:alertState',
   notificationLinks: 'solar:notificationLinks',
+  myGrid: 'solar:myGrid',
+  dxGrid: 'solar:dxGrid',
 } as const;
 
 export const BAND_ACTIVITY_CACHE_MS = 30 * 60 * 1000;

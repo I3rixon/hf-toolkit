@@ -10,6 +10,10 @@ import type { ContestEntry } from '../../lib/contests';
 import { drawBandActivityGrid, effectiveColorMax } from '../../lib/heatmap-canvas';
 import { STALE_THRESHOLD_MS, fetchAndStore, getStoredData, msSinceLastFetch } from '../../lib/solar-store';
 import type { KHistoryPoint, SolarSnapshot } from '../../lib/types';
+import { gridToLatLon, isValidGrid, latLonToGrid } from '../../lib/maidenhead';
+import { compassPoint, greatCircle } from '../../lib/geo';
+import { solarElevation, subsolarPoint } from '../../lib/grayline';
+import { GRAYLINE_THEMES, drawGrayline } from '../../lib/grayline-canvas';
 
 const solarPanelEl = document.getElementById('panel-solar')!;
 const updatedLineEl = document.getElementById('updated-line')!;
@@ -29,6 +33,8 @@ const tabPanels = {
   band: document.getElementById('panel-band')!,
   contests: document.getElementById('panel-contests')!,
   beacons: document.getElementById('panel-beacons')!,
+  grayline: document.getElementById('panel-grayline')!,
+  beam: document.getElementById('panel-beam')!,
 };
 
 const continentSelect = document.getElementById('continent-select') as HTMLSelectElement;
@@ -42,7 +48,21 @@ const beaconRotationEl = document.getElementById('beacon-rotation')!;
 const beaconSlotBadgeEl = document.getElementById('beacon-slot-badge')!;
 const beaconCountdownEl = document.getElementById('beacon-countdown-text')!;
 
-type TabName = 'solar' | 'band' | 'contests' | 'beacons';
+const graylineCanvas = document.getElementById('grayline-canvas') as HTMLCanvasElement;
+const graylineCaptionEl = document.getElementById('grayline-caption')!;
+const beamMyGridEl = document.getElementById('beam-my-grid') as HTMLInputElement;
+const beamDxGridEl = document.getElementById('beam-dx-grid') as HTMLInputElement;
+const beamErrorEl = document.getElementById('beam-error')!;
+const beamResultEl = document.getElementById('beam-result')!;
+const beamCompassEl = document.getElementById('beam-compass')!;
+const beamShortDegEl = document.getElementById('beam-short-deg')!;
+const beamShortCompassEl = document.getElementById('beam-short-compass')!;
+const beamLongDegEl = document.getElementById('beam-long-deg')!;
+const beamLongCompassEl = document.getElementById('beam-long-compass')!;
+const beamDistKmEl = document.getElementById('beam-dist-km')!;
+const beamDistMiEl = document.getElementById('beam-dist-mi')!;
+
+type TabName = 'solar' | 'band' | 'contests' | 'beacons' | 'grayline' | 'beam';
 let activeTab: TabName = 'solar';
 let latestBandData: BandActivityData | null = null;
 let latestContests: ContestEntry[] | null = null;
@@ -73,6 +93,7 @@ themeToggleBtn.addEventListener('click', async () => {
   applyTheme(next);
   await browser.storage.local.set({ [STORAGE_KEYS.theme]: next });
   if (activeTab === 'band') renderBandCanvas();
+  if (activeTab === 'grayline') renderGrayline();
 });
 
 // ---------- Alerts ----------
@@ -107,6 +128,8 @@ function setActiveTab(tab: TabName) {
   tabPanels.band.hidden = tab !== 'band';
   tabPanels.contests.hidden = tab !== 'contests';
   tabPanels.beacons.hidden = tab !== 'beacons';
+  tabPanels.grayline.hidden = tab !== 'grayline';
+  tabPanels.beam.hidden = tab !== 'beam';
 
   if (tab === 'solar') {
     pageTitleEl.textContent = 'Solar Activity';
@@ -134,12 +157,25 @@ function setActiveTab(tab: TabName) {
     } else {
       renderContestList();
     }
-  } else {
+  } else if (tab === 'beacons') {
     pageTitleEl.textContent = 'Beacons';
     sourceLinkEl.href = 'https://www.ncdxf.org/beacon/';
     sourceLinkEl.textContent = 'Source: NCDXF/IARU';
     staleBadgeEl.hidden = true;
     renderBeacons();
+  } else if (tab === 'grayline') {
+    pageTitleEl.textContent = 'Grayline';
+    sourceLinkEl.href = 'https://en.wikipedia.org/wiki/Grey-line_radio_propagation';
+    sourceLinkEl.textContent = 'Day/night terminator';
+    staleBadgeEl.hidden = true;
+    renderGrayline();
+  } else {
+    pageTitleEl.textContent = 'Beam Heading';
+    sourceLinkEl.href = 'https://en.wikipedia.org/wiki/Maidenhead_Locator_System';
+    sourceLinkEl.textContent = 'Maidenhead great-circle';
+    staleBadgeEl.hidden = true;
+    if (activeTab === 'beam') updatedLineEl.textContent = 'Enter two grid squares';
+    renderBeam();
   }
 }
 
@@ -497,6 +533,140 @@ setInterval(() => {
   if (activeTab === 'beacons') renderBeacons();
 }, 1000);
 
+// ---------- Grayline tab ----------
+
+let myGridValue = '';
+
+function fmtLat(lat: number): string {
+  return `${Math.abs(lat).toFixed(1)}°${lat >= 0 ? 'N' : 'S'}`;
+}
+
+function fmtLon(lon: number): string {
+  return `${Math.abs(lon).toFixed(1)}°${lon >= 0 ? 'E' : 'W'}`;
+}
+
+function fmtUtc(d: Date): string {
+  return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+}
+
+function renderGrayline() {
+  const now = new Date();
+  const sub = subsolarPoint(now);
+  const theme = GRAYLINE_THEMES[isDarkMode() ? 'dark' : 'light'];
+  const qth = isValidGrid(myGridValue) ? gridToLatLon(myGridValue) : null;
+  drawGrayline(graylineCanvas, { subsolar: sub, qth, theme });
+
+  const subGrid = latLonToGrid(sub.lat, sub.lon).slice(0, 4).toUpperCase();
+  let caption = `Sun overhead near ${fmtLat(sub.lat)} ${fmtLon(sub.lon)} (${subGrid}).`;
+  if (qth) {
+    const elev = solarElevation(qth.lat, qth.lon, sub);
+    const state =
+      elev >= 6 ? 'in daylight' : elev >= -0.8 ? 'on the grayline' : elev >= -6 ? 'in twilight' : 'in darkness';
+    caption += ` Your QTH (${myGridValue.toUpperCase()}) is ${state} — sun ${elev >= 0 ? '+' : ''}${elev.toFixed(0)}°.`;
+  } else {
+    caption += ' Set your grid on the Beam tab to plot your QTH.';
+  }
+  graylineCaptionEl.textContent = caption;
+
+  if (activeTab === 'grayline') {
+    updatedLineEl.textContent = `Terminator at ${fmtUtc(now)} UTC · updates each minute`;
+  }
+}
+
+setInterval(() => {
+  if (activeTab === 'grayline') renderGrayline();
+}, 60_000);
+
+// ---------- Beam Heading tab ----------
+
+function needle(bearingDeg: number, len: number, color: string, width: number, dashed: boolean): string {
+  const b = (bearingDeg * Math.PI) / 180;
+  const x = 60 + Math.sin(b) * len;
+  const y = 60 - Math.cos(b) * len;
+  return `<line x1="60" y1="60" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="${width}" stroke-linecap="round"${dashed ? ' stroke-dasharray="3 3"' : ''} />`;
+}
+
+function drawCompass(shortB: number, longB: number) {
+  const ring = `<circle cx="60" cy="60" r="52" fill="none" stroke="var(--border)" stroke-width="2" />`;
+  const ticks = [0, 90, 180, 270]
+    .map((a) => {
+      const b = (a * Math.PI) / 180;
+      const x1 = 60 + Math.sin(b) * 52;
+      const y1 = 60 - Math.cos(b) * 52;
+      const x2 = 60 + Math.sin(b) * 45;
+      const y2 = 60 - Math.cos(b) * 45;
+      return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="var(--text-muted)" stroke-width="2" />`;
+    })
+    .join('');
+  const labels = `
+    <text x="60" y="17" text-anchor="middle" class="beam-compass-label">N</text>
+    <text x="107" y="64" text-anchor="middle" class="beam-compass-label">E</text>
+    <text x="60" y="111" text-anchor="middle" class="beam-compass-label">S</text>
+    <text x="13" y="64" text-anchor="middle" class="beam-compass-label">W</text>`;
+  const longNeedle = needle(longB, 40, 'var(--text-muted)', 2, true);
+  const shortNeedle = needle(shortB, 44, 'var(--accent)', 3.5, false);
+  const hub = `<circle cx="60" cy="60" r="4" fill="var(--accent)" />`;
+  beamCompassEl.innerHTML = ring + ticks + labels + longNeedle + shortNeedle + hub;
+}
+
+function renderBeam() {
+  const myG = beamMyGridEl.value.trim();
+  const dxG = beamDxGridEl.value.trim();
+
+  if (!myG && !dxG) {
+    beamErrorEl.hidden = true;
+    beamResultEl.hidden = true;
+    return;
+  }
+
+  const from = gridToLatLon(myG);
+  const to = gridToLatLon(dxG);
+  if (!from || !to) {
+    beamResultEl.hidden = true;
+    beamErrorEl.hidden = false;
+    if (myG && !from) beamErrorEl.textContent = `"${myG.toUpperCase()}" isn't a valid grid square.`;
+    else if (dxG && !to) beamErrorEl.textContent = `"${dxG.toUpperCase()}" isn't a valid grid square.`;
+    else beamErrorEl.textContent = 'Enter both grid squares (e.g. FN31 and JO65).';
+    return;
+  }
+
+  const r = greatCircle(from, to);
+  beamErrorEl.hidden = true;
+  beamResultEl.hidden = false;
+  beamShortDegEl.textContent = String(Math.round(r.shortPathBearing) % 360);
+  beamShortCompassEl.textContent = compassPoint(r.shortPathBearing);
+  beamLongDegEl.textContent = String(Math.round(r.longPathBearing) % 360);
+  beamLongCompassEl.textContent = compassPoint(r.longPathBearing);
+  beamDistKmEl.textContent = Math.round(r.distanceKm).toLocaleString();
+  beamDistMiEl.textContent = Math.round(r.distanceMi).toLocaleString();
+  drawCompass(r.shortPathBearing, r.longPathBearing);
+
+  if (activeTab === 'beam') {
+    updatedLineEl.textContent = `${myG.toUpperCase()} → ${dxG.toUpperCase()}`;
+  }
+}
+
+function onBeamInput() {
+  myGridValue = beamMyGridEl.value.trim();
+  browser.storage.local.set({
+    [STORAGE_KEYS.myGrid]: beamMyGridEl.value.trim(),
+    [STORAGE_KEYS.dxGrid]: beamDxGridEl.value.trim(),
+  });
+  renderBeam();
+}
+
+beamMyGridEl.addEventListener('input', onBeamInput);
+beamDxGridEl.addEventListener('input', onBeamInput);
+
+async function initGrids() {
+  const stored = await browser.storage.local.get([STORAGE_KEYS.myGrid, STORAGE_KEYS.dxGrid]);
+  const my = (stored[STORAGE_KEYS.myGrid] as string | undefined) ?? '';
+  const dx = (stored[STORAGE_KEYS.dxGrid] as string | undefined) ?? '';
+  beamMyGridEl.value = my;
+  beamDxGridEl.value = dx;
+  myGridValue = my.trim();
+}
+
 // ---------- Refresh button (context-aware) ----------
 
 refreshBtn.addEventListener('click', () => {
@@ -506,8 +676,12 @@ refreshBtn.addEventListener('click', () => {
     loadBand(continentSelect.value, true);
   } else if (activeTab === 'contests') {
     loadContests(true);
-  } else {
+  } else if (activeTab === 'beacons') {
     renderBeacons();
+  } else if (activeTab === 'grayline') {
+    renderGrayline();
+  } else {
+    renderBeam();
   }
 });
 
@@ -515,6 +689,7 @@ refreshBtn.addEventListener('click', () => {
 
 initTheme();
 initAlerts();
+initGrids();
 initBandContinent().then(() => {
   loadAndRenderSolar().then((latest) => {
     if (msSinceLastFetch(latest) > STALE_THRESHOLD_MS) {

@@ -21,10 +21,12 @@
       </header>
 
       <nav class="tab-bar" role="tablist">
-        <button class="tab-btn active" data-tab="solar" role="tab" aria-selected="true">Solar Activity</button>
-        <button class="tab-btn" data-tab="band" role="tab" aria-selected="false">Band Activity</button>
+        <button class="tab-btn active" data-tab="solar" role="tab" aria-selected="true">Solar</button>
+        <button class="tab-btn" data-tab="band" role="tab" aria-selected="false">Bands</button>
         <button class="tab-btn" data-tab="contests" role="tab" aria-selected="false">Contests</button>
         <button class="tab-btn" data-tab="beacons" role="tab" aria-selected="false">Beacons</button>
+        <button class="tab-btn" data-tab="grayline" role="tab" aria-selected="false">Grayline</button>
+        <button class="tab-btn" data-tab="beam" role="tab" aria-selected="false">Beam</button>
       </nav>
 
       <main id="panel-solar" class="tab-panel content">
@@ -69,6 +71,52 @@
         </table>
         <p class="section-title beacon-rotation-title">Full Rotation</p>
         <ol id="beacon-rotation" class="beacon-rotation"></ol>
+      </main>
+
+      <main id="panel-grayline" class="tab-panel content" hidden>
+        <p class="contests-intro">Live day/night terminator. The amber <b>grayline</b> band is where HF paths are often enhanced at dawn/dusk.</p>
+        <div class="canvas-wrap grayline-wrap">
+          <canvas id="grayline-canvas"></canvas>
+        </div>
+        <p id="grayline-caption" class="band-caption"></p>
+      </main>
+
+      <main id="panel-beam" class="tab-panel content" hidden>
+        <p class="contests-intro">Great-circle distance and beam heading between two Maidenhead grid squares.</p>
+        <div class="beam-form">
+          <label class="beam-field">
+            <span>My grid</span>
+            <input id="beam-my-grid" type="text" maxlength="6" placeholder="FN31" autocomplete="off" spellcheck="false" />
+          </label>
+          <label class="beam-field">
+            <span>DX grid</span>
+            <input id="beam-dx-grid" type="text" maxlength="6" placeholder="JO65" autocomplete="off" spellcheck="false" />
+          </label>
+        </div>
+        <p id="beam-error" class="beam-error" hidden></p>
+        <div id="beam-result" class="beam-result" hidden>
+          <div class="beam-compass-wrap">
+            <svg id="beam-compass" class="beam-compass" viewBox="0 0 120 120" aria-hidden="true"></svg>
+          </div>
+          <div class="beam-stats">
+            <div class="beam-stat">
+              <div class="beam-stat-value"><span id="beam-short-deg">—</span>°</div>
+              <div class="beam-stat-label">Short path <span id="beam-short-compass"></span></div>
+            </div>
+            <div class="beam-stat">
+              <div class="beam-stat-value"><span id="beam-long-deg">—</span>°</div>
+              <div class="beam-stat-label">Long path <span id="beam-long-compass"></span></div>
+            </div>
+            <div class="beam-stat">
+              <div class="beam-stat-value" id="beam-dist-km">—</div>
+              <div class="beam-stat-label">km</div>
+            </div>
+            <div class="beam-stat">
+              <div class="beam-stat-value" id="beam-dist-mi">—</div>
+              <div class="beam-stat-label">miles</div>
+            </div>
+          </div>
+        </div>
       </main>
 
       <footer class="app-footer">
