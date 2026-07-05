@@ -666,3 +666,74 @@ body {
   letter-spacing: 0.3px;
   margin-top: 2px;
 }
+
+/* Antenna Calculator tab */
+.antenna-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.antenna-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.antenna-field span {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.antenna-field select,
+.antenna-field input {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  font-family: inherit;
+  width: 100%;
+}
+
+.antenna-field input:focus,
+.antenna-field select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.antenna-units {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.unit-btn {
+  border: none;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.unit-btn.active {
+  background: var(--accent);
+  color: #0b0e14;
+}
+
+.antenna-wrap canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}

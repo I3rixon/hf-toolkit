@@ -14,6 +14,8 @@ import { gridToLatLon, isValidGrid, latLonToGrid } from '../../lib/maidenhead';
 import { compassPoint, greatCircle } from '../../lib/geo';
 import { solarElevation, subsolarPoint } from '../../lib/grayline';
 import { GRAYLINE_THEMES, drawGrayline } from '../../lib/grayline-canvas';
+import { ANTENNA_TYPES, calcAntenna, getAntennaType } from '../../lib/antenna';
+import { ANTENNA_THEMES, drawAntennaDiagram } from '../../lib/antenna-canvas';
 
 const solarPanelEl = document.getElementById('panel-solar')!;
 const updatedLineEl = document.getElementById('updated-line')!;
@@ -35,6 +37,7 @@ const tabPanels = {
   beacons: document.getElementById('panel-beacons')!,
   grayline: document.getElementById('panel-grayline')!,
   beam: document.getElementById('panel-beam')!,
+  antenna: document.getElementById('panel-antenna')!,
 };
 
 const continentSelect = document.getElementById('continent-select') as HTMLSelectElement;
@@ -62,7 +65,15 @@ const beamLongCompassEl = document.getElementById('beam-long-compass')!;
 const beamDistKmEl = document.getElementById('beam-dist-km')!;
 const beamDistMiEl = document.getElementById('beam-dist-mi')!;
 
-type TabName = 'solar' | 'band' | 'contests' | 'beacons' | 'grayline' | 'beam';
+const antennaBandPresetEl = document.getElementById('antenna-band-preset') as HTMLSelectElement;
+const antennaFreqEl = document.getElementById('antenna-freq') as HTMLInputElement;
+const antennaTypeEl = document.getElementById('antenna-type') as HTMLSelectElement;
+const antennaKEl = document.getElementById('antenna-k') as HTMLInputElement;
+const antennaUnitBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('.unit-btn'));
+const antennaCanvas = document.getElementById('antenna-canvas') as HTMLCanvasElement;
+const antennaCaptionEl = document.getElementById('antenna-caption')!;
+
+type TabName = 'solar' | 'band' | 'contests' | 'beacons' | 'grayline' | 'beam' | 'antenna';
 let activeTab: TabName = 'solar';
 let latestBandData: BandActivityData | null = null;
 let latestContests: ContestEntry[] | null = null;
@@ -94,6 +105,7 @@ themeToggleBtn.addEventListener('click', async () => {
   await browser.storage.local.set({ [STORAGE_KEYS.theme]: next });
   if (activeTab === 'band') renderBandCanvas();
   if (activeTab === 'grayline') renderGrayline();
+  if (activeTab === 'antenna') renderAntenna();
 });
 
 // ---------- Alerts ----------
@@ -130,6 +142,7 @@ function setActiveTab(tab: TabName) {
   tabPanels.beacons.hidden = tab !== 'beacons';
   tabPanels.grayline.hidden = tab !== 'grayline';
   tabPanels.beam.hidden = tab !== 'beam';
+  tabPanels.antenna.hidden = tab !== 'antenna';
 
   if (tab === 'solar') {
     pageTitleEl.textContent = 'Solar Activity';
@@ -169,13 +182,19 @@ function setActiveTab(tab: TabName) {
     sourceLinkEl.textContent = 'Day/night terminator';
     staleBadgeEl.hidden = true;
     renderGrayline();
-  } else {
+  } else if (tab === 'beam') {
     pageTitleEl.textContent = 'Beam Heading';
     sourceLinkEl.href = 'https://en.wikipedia.org/wiki/Maidenhead_Locator_System';
     sourceLinkEl.textContent = 'Maidenhead great-circle';
     staleBadgeEl.hidden = true;
     if (activeTab === 'beam') updatedLineEl.textContent = 'Enter two grid squares';
     renderBeam();
+  } else {
+    pageTitleEl.textContent = 'Antenna Calculator';
+    sourceLinkEl.href = 'https://en.wikipedia.org/wiki/Dipole_antenna';
+    sourceLinkEl.textContent = 'ARRL-style resonant length formulas';
+    staleBadgeEl.hidden = true;
+    renderAntenna();
   }
 }
 
@@ -667,6 +686,100 @@ async function initGrids() {
   myGridValue = my.trim();
 }
 
+// ---------- Antenna Calculator tab ----------
+
+let antennaUnit: 'ft' | 'm' = 'ft';
+
+function fmtFt(ft: number): string {
+  return `${ft.toFixed(1)} ft`;
+}
+
+function fmtM(m: number): string {
+  return `${m.toFixed(2)} m`;
+}
+
+function fmtLen(ft: number, m: number): string {
+  return antennaUnit === 'ft' ? fmtFt(ft) : fmtM(m);
+}
+
+function renderAntenna() {
+  const freq = parseFloat(antennaFreqEl.value);
+  if (!Number.isFinite(freq) || freq <= 0) {
+    antennaCaptionEl.textContent = 'Enter a frequency in MHz.';
+    return;
+  }
+
+  const typeId = antennaTypeEl.value;
+  const type = getAntennaType(typeId);
+  const k = parseFloat(antennaKEl.value) || type.defaultK;
+  const result = calcAntenna(freq, typeId, k);
+  const theme = ANTENNA_THEMES[isDarkMode() ? 'dark' : 'light'];
+
+  const totalLabel = `${fmtLen(result.totalFt, result.totalM)} total`;
+  let legLabel = '';
+  let detail = '';
+  if (type.id === 'dipole' && result.legFt != null && result.legM != null) {
+    legLabel = fmtLen(result.legFt, result.legM) + '/leg';
+    detail = `Each leg: ${fmtLen(result.legFt, result.legM)}.`;
+  } else if (type.id === 'loop' && result.sideFt != null && result.sideM != null) {
+    legLabel = fmtLen(result.sideFt, result.sideM) + '/side';
+    detail = `~${fmtLen(result.sideFt, result.sideM)} per side (4-sided loop).`;
+  }
+
+  drawAntennaDiagram(antennaCanvas, { type: type.id, totalLabel, legLabel, theme });
+
+  antennaCaptionEl.textContent = `${type.label} for ${freq} MHz: ${fmtLen(result.totalFt, result.totalM)} (K=${k.toFixed(2)}). ${detail}`;
+
+  if (activeTab === 'antenna') {
+    updatedLineEl.textContent = `${type.label} · ${freq} MHz`;
+  }
+}
+
+antennaBandPresetEl.addEventListener('change', () => {
+  antennaFreqEl.value = antennaBandPresetEl.value;
+  onAntennaInput();
+});
+
+antennaTypeEl.addEventListener('change', () => {
+  antennaKEl.value = String(getAntennaType(antennaTypeEl.value).defaultK);
+  onAntennaInput();
+});
+
+antennaFreqEl.addEventListener('input', onAntennaInput);
+antennaKEl.addEventListener('input', onAntennaInput);
+
+antennaUnitBtns.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    antennaUnit = btn.dataset.unit as 'ft' | 'm';
+    antennaUnitBtns.forEach((b) => b.classList.toggle('active', b === btn));
+    browser.storage.local.set({ [STORAGE_KEYS.antennaUnit]: antennaUnit });
+    renderAntenna();
+  });
+});
+
+function onAntennaInput() {
+  browser.storage.local.set({
+    [STORAGE_KEYS.antennaFreq]: antennaFreqEl.value,
+    [STORAGE_KEYS.antennaType]: antennaTypeEl.value,
+  });
+  renderAntenna();
+}
+
+async function initAntenna() {
+  const stored = await browser.storage.local.get([STORAGE_KEYS.antennaFreq, STORAGE_KEYS.antennaType, STORAGE_KEYS.antennaUnit]);
+  const freq = stored[STORAGE_KEYS.antennaFreq] as string | undefined;
+  const typeId = stored[STORAGE_KEYS.antennaType] as string | undefined;
+  const unit = stored[STORAGE_KEYS.antennaUnit] as 'ft' | 'm' | undefined;
+
+  if (freq) antennaFreqEl.value = freq;
+  if (typeId && ANTENNA_TYPES.some((t) => t.id === typeId)) antennaTypeEl.value = typeId;
+  antennaKEl.value = String(getAntennaType(antennaTypeEl.value).defaultK);
+  if (unit === 'ft' || unit === 'm') {
+    antennaUnit = unit;
+    antennaUnitBtns.forEach((b) => b.classList.toggle('active', b.dataset.unit === unit));
+  }
+}
+
 // ---------- Refresh button (context-aware) ----------
 
 refreshBtn.addEventListener('click', () => {
@@ -680,8 +793,10 @@ refreshBtn.addEventListener('click', () => {
     renderBeacons();
   } else if (activeTab === 'grayline') {
     renderGrayline();
-  } else {
+  } else if (activeTab === 'beam') {
     renderBeam();
+  } else {
+    renderAntenna();
   }
 });
 
@@ -690,6 +805,7 @@ refreshBtn.addEventListener('click', () => {
 initTheme();
 initAlerts();
 initGrids();
+initAntenna();
 initBandContinent().then(() => {
   loadAndRenderSolar().then((latest) => {
     if (msSinceLastFetch(latest) > STALE_THRESHOLD_MS) {

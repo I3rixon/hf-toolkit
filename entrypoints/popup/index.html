@@ -27,6 +27,7 @@
         <button class="tab-btn" data-tab="beacons" role="tab" aria-selected="false">Beacons</button>
         <button class="tab-btn" data-tab="grayline" role="tab" aria-selected="false">Grayline</button>
         <button class="tab-btn" data-tab="beam" role="tab" aria-selected="false">Beam</button>
+        <button class="tab-btn" data-tab="antenna" role="tab" aria-selected="false">Antenna</button>
       </nav>
 
       <main id="panel-solar" class="tab-panel content">
@@ -117,6 +118,54 @@
             </div>
           </div>
         </div>
+      </main>
+
+      <main id="panel-antenna" class="tab-panel content" hidden>
+        <p class="contests-intro">Resonant wire length for a half-wave dipole, quarter-wave vertical, or full-wave loop.</p>
+        <div class="antenna-form">
+          <label class="antenna-field">
+            <span>Band</span>
+            <select id="antenna-band-preset">
+              <option value="1.9">160m</option>
+              <option value="3.75">80m</option>
+              <option value="5.3305">60m</option>
+              <option value="7.15">40m</option>
+              <option value="10.125">30m</option>
+              <option value="14.2">20m</option>
+              <option value="18.1">17m</option>
+              <option value="21.2">15m</option>
+              <option value="24.94">12m</option>
+              <option value="28.4">10m</option>
+              <option value="50.1">6m</option>
+            </select>
+          </label>
+          <label class="antenna-field">
+            <span>Frequency (MHz)</span>
+            <input id="antenna-freq" type="number" step="0.001" min="1" max="500" value="14.2" inputmode="decimal" />
+          </label>
+        </div>
+        <div class="antenna-form">
+          <label class="antenna-field">
+            <span>Type</span>
+            <select id="antenna-type">
+              <option value="dipole">Half-Wave Dipole</option>
+              <option value="vertical">Quarter-Wave Vertical</option>
+              <option value="loop">Full-Wave Loop</option>
+            </select>
+          </label>
+          <label class="antenna-field">
+            <span>End-effect factor (K)</span>
+            <input id="antenna-k" type="number" step="0.01" min="0.80" max="1.10" value="0.95" inputmode="decimal" />
+          </label>
+          <div class="antenna-units">
+            <button type="button" class="unit-btn active" data-unit="ft">ft</button>
+            <button type="button" class="unit-btn" data-unit="m">m</button>
+          </div>
+        </div>
+        <div class="canvas-wrap antenna-wrap">
+          <canvas id="antenna-canvas"></canvas>
+        </div>
+        <p id="antenna-caption" class="band-caption"></p>
       </main>
 
       <footer class="app-footer">

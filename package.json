@@ -1,8 +1,8 @@
 {
   "name": "hf-toolkit",
-  "description": "HF ham radio toolkit: solar conditions, band activity heatmap, contest calendar, NCDXF beacon schedule, grayline map, and beam-heading calculator in one popup",
+  "description": "HF ham radio toolkit: solar conditions, band activity heatmap, contest calendar, NCDXF beacon schedule, grayline map, beam-heading calculator, and antenna length calculator in one popup",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.5.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",

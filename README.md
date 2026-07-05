@@ -6,7 +6,7 @@
 
 **A ham radio HF toolkit for your browser toolbar.**
 
-Solar-weather conditions, a live DX spot heatmap, the contest calendar, the NCDXF beacon schedule, a live grayline map, and a beam-heading calculator — in one popup, updated automatically in the background. More tools planned.
+Solar-weather conditions, a live DX spot heatmap, the contest calendar, the NCDXF beacon schedule, a live grayline map, a beam-heading calculator, and an antenna length calculator — in one popup, updated automatically in the background. More tools planned.
 
 By [I3rixon](https://github.com/I3rixon)
 
@@ -46,6 +46,15 @@ By [I3rixon](https://github.com/I3rixon)
 <td><img src="screenshots/beacons-dark.png" width="240" /></td>
 <td><img src="screenshots/grayline-dark.png" width="240" /></td>
 <td><img src="screenshots/beam-dark.png" width="240" /></td>
+</tr>
+<tr>
+<td align="center"><b>Antenna Calculator</b></td>
+</tr>
+<tr>
+<td><img src="screenshots/antenna-light.png" width="240" /></td>
+</tr>
+<tr>
+<td><img src="screenshots/antenna-dark.png" width="240" /></td>
 </tr>
 </table>
 
@@ -109,6 +118,15 @@ A great-circle calculator between two Maidenhead grid squares:
 - A compass rose points the short-path bearing (solid) and long-path (dashed) so you can aim a directional antenna at a glance
 - Your grid is remembered and shared with the Grayline map — **pure math, no network, no permissions**
 
+### 📏 Antenna Calculator
+
+Resonant wire lengths for the three classic HF antenna shapes:
+
+- **Half-wave dipole**, **quarter-wave vertical**, or **full-wave loop** — pick a band preset or type any frequency
+- Diagram redraws to scale with the numbers: dipole shows each leg, vertical shows height + radials, loop shows per-side length
+- Adjustable **end-effect factor (K)** — defaults to the classic 0.95 for dipole/vertical and ~1.02 for a loop, but tweak it for your wire/insulation
+- Switch between feet and meters; your last band, type, and unit are remembered — **pure math, no network, no permissions**
+
 ### 🔔 Alerts (opt-in)
 
 Click the bell icon to turn on background notifications for:
@@ -138,7 +156,7 @@ Alerts are edge-triggered — you're notified once when a condition starts, not 
 | NCDXF/IARU | Beacon schedule (computed locally, no fetch) | [ncdxf.org/beacon](https://www.ncdxf.org/beacon/) |
 | Natural Earth | Grayline world map (bundled, public domain) | [naturalearthdata.com](https://www.naturalearthdata.com/) |
 
-The Grayline and Beam Heading tabs are computed entirely on-device — no network requests and no extra permissions.
+The Grayline, Beam Heading, and Antenna Calculator tabs are computed entirely on-device — no network requests and no extra permissions.
 
 ## Permissions
 
@@ -197,6 +215,8 @@ lib/
   grayline.ts          # subsolar point + solar elevation math
   grayline-canvas.ts   # day/night terminator map rendering
   world-map-data.ts    # bundled Natural Earth land polygons
+  antenna.ts           # resonant wire-length formulas (dipole/vertical/loop)
+  antenna-canvas.ts    # antenna schematic diagram rendering
   alerts.ts            # threshold notification logic
   constants.ts         # storage keys, thresholds, cache durations
 public/icon/           # extension icons (source SVG lives in icon-source.svg)
